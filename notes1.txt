@@ -1,0 +1,331 @@
+ACCESS CONTROL LIST - filters data traffic          || show access-list || sh ip access-list int Gi1
+
+2 TYPES: STANDARD & EXTENDED
+=============================
+SAMPLE: 
+
+network ip addresses nung mga portsite
+
+66.254.0.0
+89.222.0.0
+104.18.0.0
+208.77.0.0
+
+******
+config t
+NO ip access-list standard NOPORN
+ip access-list standard NOPORN
+
+DENY 66.254.0.0 0.0.255.255
+DENY 89.222.0.0 0.0.255.255
+DENY 104.18.0.0 0.0.255.255
+DENY 208.77.0.0 0.0.255.255
+Permit Any
+
+Int Gi 1
+ ip access-group NOPORN in
+end
+
+******ito kapag gusto ibalik, maaccess ulit*****
+
+Goberno: allow all Porn, for freedom of expression!
+(UNLOCK)
+config t
+Int gi 1
+ NO ip access-group NOPORN in
+end
+
+(REMOVE LIST)
+config t
+Int gi 1
+ NO ip access-list standard NOPORN
+end
+
+===========================
+use NOISKUL name 
+network ip addresses nung mga school
+
+184.168.0.0
+104.20.0.0
+50.6.0.0
+172.104.0.0 
+
+******
+config t
+NO ip access-list standard NOISKUL
+ip access-list standard NOISKUL
+
+DENY 184.168.0.0 0.0.255.255
+DENY 104.20.0.0 0.0.255.255
+DENY 50.6.0.0 0.0.255.255
+DENY 172.104.0.0 0.0.255.255
+Permit Any
+
+Int Gi 1
+ ip access-group NOISKUL in
+end
+
+*****ito kapag gusto ibalik, maaccess ulit*****
+config t
+Int gi 1
+ NO ip access-group NOISKUL in
+end
+
+====================
+use NOHOGGERS name
+network ip addresses nung mga school
+
+74.125
+162.159
+15.197
+186.2
+44.242
+
+******
+config t
+NO ip access-list standard NOHOGGERS
+ip access-list standard NOHOGGERS
+DENY 74.125.0.0 0.0.255.255
+DENY 162.159.0.0 0.0.255.255
+DENY 15.197.0.0 0.0.255.255
+DENY 186.2.0.0 0.0.255.255
+DENY 44.242.0.0 0.0.255.255
+Permit Any
+
+Int Gi 1
+ ip access-group NOHOGGERS in
+end
+
+*****ito kapag gusto ibalik, maaccess ulit*****
+config t
+Int gi 1
+ NO ip access-group NOHOGGERS in
+end
+
+=============
+config t
+no access-list 25
+access-list 25 DENY 66.254.0.0 0.0.255.255
+access-list 25 DENY 89.222.0.0 0.0.255.255
+access-list 25 DENY 104.18.0.0 0.0.255.255
+access-list 25 DENY 208.77.0.0 0.0.255.255
+
+access-list 25 permit Any
+Int gi 1
+ ip access-group 25 in
+end
+
+===============
+config t
+no access-list 25
+access-list 25 DENY 66.254.0.0 0.0.255.255
+access-list 25 DENY 89.222.0.0 0.0.255.255
+access-list 25 DENY 104.18.0.0 0.0.255.255
+access-list 25 DENY 208.77.0.0 0.0.255.255
+
+access-list 25 permit Any
+Int gi 1
+ ip access-group 25 in
+end
+================
+
+Another example: 
+10.11.0.0
+10.12.0.0
+10.21.0.0
+10.22.0.0
+10.31.0.0
+10.32.0.0
+10.41.0.0
+10.42.0.0
+
+@EDGE (SERIAL)
+config t
+no ip access-list extended NOCLASSMATE1
+ip access-list extended NOCLASSMATE1
+permit ospf any any
+PERMIT IP 10.41.0.0 0.0.255.255 any 
+PERMIT IP 10.42.0.0 0.0.255.255 any
+PERMIT IP 10.51.0.0 0.0.255.255 any
+PERMIT IP 10.52.0.0 0.0.255.255 any
+PERMIT IP 10.62.0.0 0.0.255.255 any
+PERMIT IP 10.71.0.0 0.0.255.255 any
+
+int g0/0/1
+ ip access-group NOCLASSMATE1 in
+end
+
+=============
+config t
+ip access-list extended PROTECTME
+DENY tcp any host bet10.com eq 19
+permit any any
+
+int gi3
+ ip access-group PROTECTME in
+end
+
+
+
+=======================
+Basic recipe of ACL
+FORMAT:
+ip access-list extended PROTECTME
+<action> <protocol> <hacker/source> <victim/destination> eq <port no.>
+           tcp=data
+	   udp=streams
+	   icmp=ping (EQ not applicable)
+	   ip=all of the above (host and eq not applicable)
+
+Accest-list reads from top to bottom 
+Implicit Auto Deny - by default DENY IP ANY ANY
+
+FinishingCombo: apply to corresponding interface,list,in/out
+	int <interface>
+	 ip access-group <LIST> <IN/OUT>
+
+Common Port Numbers: 
+http = 80 
+https = 443
+telnet = 23
+ssh = 22
+DNS = 53
+FTP = 20/21
+SMTP = 25
+POP3 = 110
+IMAP = 143
+NTP = 123
+SCCP = 2000 (cisco proprietary telephony)
+SIP = 5060
+
+====================
+Create a policy name POLICY1
+config t
+bet10.com allow http,https,ping
+bet11.com allow sip and sccp
+
+NO ip access-list extended POLICY1
+ip access-list extended POLICY1
+ permit tcp any host bet10.com eq 80
+ permit tcp any host bet10.com eq 443
+ permit icmp ny host bet10.com
+
+ permit tcp any host bet11.com eq 2000
+ permit tcp any host bet11.com eq 5060
+
+int gi3
+ ip access-group POLICY1 in
+end
+
+NO ip access-group POLICY1 in
+
+=======
+Create a POLICY2: 
+bet10.com: ping,http,ftp
+bet11.com: ping, dns, https, ssh
+
+config t
+bet10.com allow ping,http,ftp
+bet11.com allow ping, dns, https, ssh
+
+NO ip access-list extended POLICY2
+ip access-list extended POLICY2
+ permit icmp any host bet10.com
+ permit tcp any host bet10.com eq 80
+ permit tcp any host bet10.com 20
+
+ permit icmp any host bet11.com 
+ permit tcp any host bet11.com eq 53
+ permit tcp any host bet11.com eq 443
+ permit tcp any host bet11.com eq 22
+
+int gi3
+ ip access-group POLICY2 in
+end
+
+*****
+config t
+Int gi 1
+ NO ip access-group POLICY2 in
+end
+
+======
+Create a POLICY3: 
+
+bet10.com: ssh, dns
+bet11.com: https, ssh, sip
+
+config t
+bet10.com allow ssh,dns
+bet11.com allow https, ssh, sip
+
+NO ip access-list extended POLICY3
+ip access-list extended POLICY3
+
+ permit tcp any host bet10.com eq 22
+ permit tcp any host bet10.com 53
+
+ permit tcp any host bet11.com eq 443
+ permit tcp any host bet11.com eq 22
+ permit tcp any host bet11.com eq 5060
+
+int gi3
+ ip access-group POLICY3 in
+end
+
+*****
+config t
+Int gi 1
+ NO ip access-group POLICY3 in
+end
+
+============================
+EXAMPLE SA EXAM 
+Create an Access-List that applies im the two servers with different access level. bet10 host can be pinged, access telnet, web browsing, connect to video conferencing using their cisco telephony but can also be use for penetration testing via port 19. 
+Bet 11 has DNS service, secure web access, and can use MS teams. 
+Also, bet11 host are not pingable for security reasons. 
+
+bet10: ping, telnet, http, sccp, chargen
+bet11: dns, https, sip
+
+config t 
+bet10 allow access ping, telnet, http, sccp, chargen
+bet11 allow access dns, https, sip
+
+no ip access-list extended POLICY4 
+ip access-list extended POLICY4
+
+permit icmp any host bet10.com 
+permit tcp any host bet10.com eq 
+
+NO ip access-list extended POLICY2
+ip access-list extended POLICY2
+
+ permit icmp any host bet10.com
+ permit tcp any host bet10.com
+ permit tcp any host bet10.com
+ permit icmp any host bet10.com
+ permit icmp any host bet10.com 
+
+ permit icmp any host bet10.com
+
+
+
+
+TCP 
+(sender)        receiver       sample nagsend yung sender ng hello 
+1		1
+2		2
+3		x
+4		x
+5		5
+
+UDP         
+1		1
+2		X
+3		3
+4		4
+5		X
+
+
+
